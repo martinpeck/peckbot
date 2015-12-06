@@ -36,6 +36,7 @@ class RtmBot(object):
                 self.input(reply)
             self.crons()
             self.output()
+            self.file()
             self.autoping()
             time.sleep(.1)
     def autoping(self):
@@ -63,6 +64,18 @@ class RtmBot(object):
                     message = output[1].encode('ascii','ignore')
                     channel.send_message("{}".format(message))
                     limiter = True
+    def file(self):
+        for plugin in self.bot_plugins:
+            limiter = False
+            for file in plugin.do_file():
+                channel = self.slack_client.server.channels.find(file[0])
+                if channel != None and file[1] != None:
+                    if limiter == True:
+                        time.sleep(.1)
+                        limiter = False
+                    message = file[1].encode('ascii','ignore')
+                    channel.send_message("{}".format(message))
+                    limiter = True
     def crons(self):
         for plugin in self.bot_plugins:
             plugin.do_jobs()
@@ -85,6 +98,7 @@ class Plugin(object):
         self.module = __import__(name)
         self.register_jobs()
         self.outputs = []
+        self.files = []
         if name in config:
             logging.info("config found for: " + name)
             self.module.config = config[name]
@@ -128,6 +142,18 @@ class Plugin(object):
             else:
                 self.module.outputs = []
         return output
+    def do_file(self):
+        file = []
+        while True:
+            if 'files' in dir(self.module):
+                if len(self.module.files) > 0:
+                    logging.info("files from {}".format(self.module))
+                    file.append(self.module.files.pop(0))
+                else:
+                    break
+            else:
+                self.module.files = []
+        return file
 
 class Job(object):
     def __init__(self, interval, function):
