@@ -13,6 +13,7 @@ import logging
 from argparse import ArgumentParser
 
 from slackclient import SlackClient
+from slacker import Slacker
 
 def dbg(debug_string):
     if debug:
@@ -27,6 +28,7 @@ class RtmBot(object):
     def connect(self):
         """Convenience method that creates Server instance"""
         self.slack_client = SlackClient(self.token)
+        self.slacker = Slacker(self.token)
         self.slack_client.rtm_connect()
     def start(self):
         self.connect()
@@ -68,13 +70,12 @@ class RtmBot(object):
         for plugin in self.bot_plugins:
             limiter = False
             for file in plugin.do_file():
-                channel = self.slack_client.server.channels.find(file[0])
+                channel = file[0]
                 if channel != None and file[1] != None:
                     if limiter == True:
                         time.sleep(.1)
                         limiter = False
-                    message = file[1].encode('ascii','ignore')
-                    channel.send_message("{}".format(message))
+                    self.slacker.files.upload(file[1], channels="#bot_test")
                     limiter = True
     def crons(self):
         for plugin in self.bot_plugins:
