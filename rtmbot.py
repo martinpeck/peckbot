@@ -75,7 +75,7 @@ class RtmBot(object):
                     if limiter == True:
                         time.sleep(.1)
                         limiter = False
-                    self.slacker.files.upload(file[1], channels="#bot_test")
+                    self.slacker.files.upload(file[1], channels="#photos")
                     limiter = True
     def crons(self):
         for plugin in self.bot_plugins:
